@@ -1,0 +1,81 @@
+name: Build IPA
+
+# Compiles the app on a GitHub-hosted Mac and publishes an unsigned .ipa
+# (for sideloading from the iPhone) as a release and as a build artifact.
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Set up Python (only to draw the app icon if missing)
+        if: hashFiles('ShakilCam/Assets.xcassets/AppIcon.appiconset/AppIcon.png') == ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Draw app icon
+        if: hashFiles('ShakilCam/Assets.xcassets/AppIcon.appiconset/AppIcon.png') == ''
+        run: |
+          pip install pillow
+          python scripts/make_icon.py
+
+      - name: Build (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          xcodebuild \
+            -project ShakilCam.xcodeproj \
+            -target ShakilCam \
+            -configuration Release \
+            -sdk iphoneos \
+            SYMROOT="$PWD/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            -quiet \
+            build
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/Release-iphoneos/ShakilCam.app Payload/
+          zip -qry ShakilCam.ipa Payload
+          ls -lh ShakilCam.ipa
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShakilCam-ipa
+          path: ShakilCam.ipa
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Shakil Cam (build ${{ github.run_number }})
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: ShakilCam.ipa
+          body: |
+            IPA non firmata di Shakil Cam, da installare con un'app di sideload
+            (SideStore, AltStore, Feather, Sideloadly…), che la firma con il tuo Apple ID.
+
+            Dal telefono: tocca **ShakilCam.ipa** qui sotto → Condividi → apri con la tua app di sideload.
