@@ -156,11 +156,12 @@ final class CameraController: NSObject, ObservableObject {
             let mic = await AVCaptureDevice.requestAccess(for: .audio)
             camLog(mic ? "Microfono autorizzato" : "Microfono negato: video senza audio", mic ? .success : .warning)
         }
+        let isGranted = granted
         let requested = await MainActor.run { () -> CameraSettings in
-            self.authorization = granted ? .authorized : .denied
+            self.authorization = isGranted ? .authorized : .denied
             return self.settings
         }
-        if granted {
+        if isGranted {
             camLog("Accesso fotocamera concesso", .success)
             startSession(requested)
         } else {
@@ -420,6 +421,7 @@ final class CameraController: NSObject, ObservableObject {
         let analysis = session.outputs.contains(videoDataOutput)
         let megapixels = Int((Double(photoOutput.maxPhotoDimensions.width) * Double(photoOutput.maxPhotoDimensions.height) / 1_000_000).rounded())
         let applied = s
+        let appliedCodec = codec
 
         camLog(describe(applied, lens: lens, codec: codec), .success)
 
@@ -431,7 +433,7 @@ final class CameraController: NSObject, ObservableObject {
             capabilities = caps
             currentLens = lens
             analysisAvailable = analysis
-            activeCodec = codec
+            activeCodec = appliedCodec
             photoMegapixels = max(megapixels, 1)
             isoStops = ranges.iso
             shutterStops = ranges.shutter

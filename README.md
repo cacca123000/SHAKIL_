@@ -64,7 +64,19 @@ un **log live** di tutto quello che fa la fotocamera e un'interfaccia scura in s
 
 ---
 
-## 🚀 Come installarla sul tuo iPhone
+## 📲 Installarla solo dal telefono (senza computer)
+
+Ogni volta che il codice cambia, GitHub compila l'app su un Mac nel cloud e pubblica
+**`ShakilCam.ipa`** nella pagina **Releases** di questo repository.
+
+1. Apri la pagina **Releases** e scarica `ShakilCam.ipa` dall'ultima build.
+2. Tocca il file scaricato → **Condividi** → aprilo con la tua app di sideload
+   (SideStore, AltStore, Feather, Sideloadly…). L'app la firma con il tuo Apple ID.
+3. Serve la **Modalità sviluppatore** attiva (*Impostazioni → Privacy e sicurezza*).
+
+> Con un Apple ID gratuito l'app va rinnovata ogni 7 giorni dall'app di sideload.
+
+## 🚀 Installarla con un Mac
 
 Serve un **Mac con Xcode 16 o successivo** e un **iPhone con iOS 17 o successivo**.
 La fotocamera non funziona nel Simulatore: va provata su un iPhone vero.
